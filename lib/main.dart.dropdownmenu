@@ -34,7 +34,9 @@ class NominatimWidget extends StatefulWidget {
 }
 
 class _NominatimWidgetState extends State<NominatimWidget> {
-  final myController = TextEditingController();
+  TextEditingController myController = TextEditingController();
+  final TextEditingController menuController = TextEditingController();
+
   Timer? _debounce;
   NominatimModel nominatim = NominatimModel();
   List<Place> places = [];
@@ -49,6 +51,8 @@ class _NominatimWidgetState extends State<NominatimWidget> {
   }
 
   List<String> names = [];
+  String? _selectedValue;
+  bool isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -67,26 +71,57 @@ class _NominatimWidgetState extends State<NominatimWidget> {
                       Timer(const Duration(milliseconds: 500), () async {
                     places = await nominatim.fetchPlaces(value);
                     setState(() {
-                      names = places.map((place) => place.name).toList();
+                      names = places.map((place) => place.displayName).toList();
                     });
                   });
                 },
               ),
               names.isNotEmpty
-                  ? SizedBox(
-                      height: 400,
-                      child: ListView.builder(
-                        itemCount: places.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Card(
-                            child: ListTile(
-                              title: Text(places[index].displayName),
-                            ),
-                          );
-                        },
+                  ? DropdownButtonFormField<String>(
+                      value: names[0],
+                      isExpanded: true,
+                      isDense: false,
+                      decoration: InputDecoration(
+                        // labelText: 'Select an option',
+                        border: OutlineInputBorder(),
                       ),
+                      // value: _selectedValue,
+                      items: names
+                          .map((option) => DropdownMenuItem(
+                                value: option,
+                                child: Text(option),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          myController.text = value ?? '';
+                          _selectedValue = value;
+                          names = [];
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please select an option';
+                        }
+                        return null;
+                      },
                     )
                   : Container()
+
+              // ? SizedBox(
+              //     height: 400,
+              //     child: ListView.builder(
+              //       itemCount: places.length,
+              //       itemBuilder: (BuildContext context, int index) {
+              //         return Card(
+              //           child: ListTile(
+              //             title: Text(places[index].displayName),
+              //           ),
+              //         );
+              //       },
+              //     ),
+              //   )
+              // : Container()
             ],
           ),
         ),

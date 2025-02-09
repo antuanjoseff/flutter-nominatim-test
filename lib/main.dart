@@ -35,16 +35,19 @@ class NominatimWidget extends StatefulWidget {
 }
 
 class _NominatimWidgetState extends State<NominatimWidget> {
-  final myController = TextEditingController();
+  TextEditingController myOriginController = TextEditingController();
+  TextEditingController myTargetController = TextEditingController();
   Timer? _debounce;
   NominatimModel nominatim = NominatimModel();
   List<Place> places = [];
   int numPlaces = 0;
+  bool listNamesVisible = true;
 
   @override
   void dispose() {
     // Clean up the controller when the widget is disposed.
-    myController.dispose();
+    myOriginController.dispose();
+    myTargetController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -60,7 +63,12 @@ class _NominatimWidgetState extends State<NominatimWidget> {
             children: [
               Text('Origen'),
               TextFormField(
-                controller: myController,
+                controller: myOriginController,
+                onTap: () {
+                  setState(() {
+                    listNamesVisible = true;
+                  });
+                },
                 onChanged: (value) {
                   if (_debounce?.isActive ?? false) _debounce?.cancel();
                   _debounce =
@@ -73,8 +81,31 @@ class _NominatimWidgetState extends State<NominatimWidget> {
                   });
                 },
               ),
-              Text('$name  ${name == ''}'),
-              name != '' ? Card(child: ListNames(search: name)) : Container()
+              name != ''
+                  ? Card(
+                      child: ListNames(
+                      search: name,
+                      textController: myOriginController,
+                      visible: listNamesVisible,
+                    ))
+                  : Container(),
+
+              // Text('Destí'),
+              // TextFormField(
+              //   controller: myTargetController,
+              //   onChanged: (value) {
+              //     if (_debounce?.isActive ?? false) _debounce?.cancel();
+              //     _debounce =
+              //         Timer(const Duration(milliseconds: 500), () async {
+              //       // places = await nominatim.fetchPlaces(value);
+              //       setState(() {
+              //         name = value;
+              //         debugPrint('$name');
+              //       });
+              //     });
+              //   },
+              // ),
+              // ],
             ],
           ),
         ),

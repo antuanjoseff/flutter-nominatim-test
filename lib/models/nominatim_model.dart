@@ -9,7 +9,7 @@ class NominatimModel {
 
   static String southEast = '1.250, 41.067';
   static String northWest = '5.359, 43.113';
-  static int limit = 5;
+  static int limit = 15;
   static String viewbox = '$southEast, $northWest';
 
   static setLimit(newlimit) {
