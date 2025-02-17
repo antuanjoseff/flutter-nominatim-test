@@ -15,6 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -35,18 +36,22 @@ class NominatimWidget extends StatefulWidget {
 }
 
 class _NominatimWidgetState extends State<NominatimWidget> {
-  TextEditingController myOriginController = TextEditingController();
+  TextEditingController mySourceController = TextEditingController();
   TextEditingController myTargetController = TextEditingController();
   Timer? _debounce;
   NominatimModel nominatim = NominatimModel();
-  List<Place> places = [];
+  List<Place> sources = [];
+  List<Place> targets = [];
   int numPlaces = 0;
-  bool listNamesVisible = true;
+  bool sourceListVisible = true;
+  bool targetListVisible = true;
+  bool searchingSource = false;
+  bool searchingTarget = false;
 
   @override
   void dispose() {
     // Clean up the controller when the widget is disposed.
-    myOriginController.dispose();
+    mySourceController.dispose();
     myTargetController.dispose();
     _debounce?.cancel();
     super.dispose();
@@ -63,49 +68,82 @@ class _NominatimWidgetState extends State<NominatimWidget> {
             children: [
               Text('Origen'),
               TextFormField(
-                controller: myOriginController,
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  suffixIcon:
+                      searchingSource ? CircularProgressIndicator() : null,
+                ),
+                controller: mySourceController,
                 onTap: () {
+                  mySourceController.selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: mySourceController.value.text.length);
                   setState(() {
-                    listNamesVisible = true;
+                    sourceListVisible = true;
+                    targetListVisible = false;
                   });
                 },
                 onChanged: (value) {
                   if (_debounce?.isActive ?? false) _debounce?.cancel();
                   _debounce =
                       Timer(const Duration(milliseconds: 500), () async {
-                    // places = await nominatim.fetchPlaces(value);
                     setState(() {
-                      name = value;
-                      debugPrint('$name');
+                      searchingSource = true;
+                    });
+                    sources = await nominatim.fetchPlaces(value);
+                    setState(() {
+                      searchingSource = false;
                     });
                   });
                 },
               ),
-              name != ''
-                  ? Card(
-                      child: ListNames(
-                      search: name,
-                      textController: myOriginController,
-                      visible: listNamesVisible,
-                    ))
+              sources.isNotEmpty
+                  ? Column(children: [
+                      ListNames(
+                          data: sources,
+                          textController: mySourceController,
+                          visible: sourceListVisible)
+                    ])
                   : Container(),
-
-              // Text('Destí'),
-              // TextFormField(
-              //   controller: myTargetController,
-              //   onChanged: (value) {
-              //     if (_debounce?.isActive ?? false) _debounce?.cancel();
-              //     _debounce =
-              //         Timer(const Duration(milliseconds: 500), () async {
-              //       // places = await nominatim.fetchPlaces(value);
-              //       setState(() {
-              //         name = value;
-              //         debugPrint('$name');
-              //       });
-              //     });
-              //   },
-              // ),
-              // ],
+              Text('Destí'),
+              TextFormField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  suffixIcon:
+                      searchingTarget ? CircularProgressIndicator() : null,
+                ),
+                controller: myTargetController,
+                onTap: () {
+                  myTargetController.selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: myTargetController.value.text.length);
+                  setState(() {
+                    sourceListVisible = false;
+                    targetListVisible = true;
+                  });
+                },
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce?.cancel();
+                  _debounce =
+                      Timer(const Duration(milliseconds: 300), () async {
+                    setState(() {
+                      searchingTarget = true;
+                    });
+                    targets = await nominatim.fetchPlaces(value);
+                    setState(() {
+                      searchingTarget = false;
+                    });
+                  });
+                },
+              ),
+              targets.isNotEmpty
+                  ? Column(children: [
+                      ListNames(
+                          data: targets,
+                          textController: myTargetController,
+                          visible: targetListVisible)
+                    ])
+                  : Container(),
             ],
           ),
         ),
