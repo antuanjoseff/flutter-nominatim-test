@@ -23,13 +23,12 @@ class NominatimModel {
   }
 
   Future<List<Place>> fetchPlaces(name) async {
-    debugPrint('viewbox $viewbox');
     // String url = search + '?q=$name&limit=$limit&format=json&viewbox=$viewbox';
     if (name == '') return [];
     String url = search + '$name?format=json';
 
     final response = await http.get(Uri.parse(url));
-    debugPrint('${response.body}');
+
     if (response.statusCode == 200) {
       return placeFromJson(response.body);
     } else {

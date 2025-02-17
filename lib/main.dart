@@ -5,149 +5,153 @@ import 'dart:async';
 import './models/nominatim_model.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const NominatimWidget(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class NominatimWidget extends StatefulWidget {
-  const NominatimWidget({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<NominatimWidget> createState() => _NominatimWidgetState();
-}
-
-class _NominatimWidgetState extends State<NominatimWidget> {
-  TextEditingController mySourceController = TextEditingController();
-  TextEditingController myTargetController = TextEditingController();
-  Timer? _debounce;
-  NominatimModel nominatim = NominatimModel();
-  List<Place> sources = [];
-  List<Place> targets = [];
-  int numPlaces = 0;
-  bool sourceListVisible = true;
-  bool targetListVisible = true;
-  bool searchingSource = false;
-  bool searchingTarget = false;
-
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    mySourceController.dispose();
-    myTargetController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  String name = '';
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Text('Origen'),
-              TextFormField(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  suffixIcon:
-                      searchingSource ? CircularProgressIndicator() : null,
-                ),
-                controller: mySourceController,
-                onTap: () {
-                  mySourceController.selection = TextSelection(
-                      baseOffset: 0,
-                      extentOffset: mySourceController.value.text.length);
-                  setState(() {
-                    sourceListVisible = true;
-                    targetListVisible = false;
-                  });
-                },
-                onChanged: (value) {
-                  if (_debounce?.isActive ?? false) _debounce?.cancel();
-                  _debounce =
-                      Timer(const Duration(milliseconds: 500), () async {
-                    setState(() {
-                      searchingSource = true;
-                    });
-                    sources = await nominatim.fetchPlaces(value);
-                    setState(() {
-                      searchingSource = false;
-                    });
-                  });
-                },
-              ),
-              sources.isNotEmpty
-                  ? Column(children: [
-                      ListNames(
-                          data: sources,
-                          textController: mySourceController,
-                          visible: sourceListVisible)
-                    ])
-                  : Container(),
-              Text('Destí'),
-              TextFormField(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  suffixIcon:
-                      searchingTarget ? CircularProgressIndicator() : null,
-                ),
-                controller: myTargetController,
-                onTap: () {
-                  myTargetController.selection = TextSelection(
-                      baseOffset: 0,
-                      extentOffset: myTargetController.value.text.length);
-                  setState(() {
-                    sourceListVisible = false;
-                    targetListVisible = true;
-                  });
-                },
-                onChanged: (value) {
-                  if (_debounce?.isActive ?? false) _debounce?.cancel();
-                  _debounce =
-                      Timer(const Duration(milliseconds: 300), () async {
-                    setState(() {
-                      searchingTarget = true;
-                    });
-                    targets = await nominatim.fetchPlaces(value);
-                    setState(() {
-                      searchingTarget = false;
-                    });
-                  });
-                },
-              ),
-              targets.isNotEmpty
-                  ? Column(children: [
-                      ListNames(
-                          data: targets,
-                          textController: myTargetController,
-                          visible: targetListVisible)
-                    ])
-                  : Container(),
-            ],
-          ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Search Bar with Suggestions'),
+        ),
+        body: Center(
+          child: SearchBar(),
         ),
       ),
     );
   }
+}
+
+class SearchBar extends StatefulWidget {
+  const SearchBar({super.key});
+
+  @override
+  _SearchBarState createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<SearchBar> {
+  TextEditingController _searchController = TextEditingController();
+  FocusNode _focusNode = FocusNode();
+  int _selectedIndex = -1;
+  NominatimModel nominatim = NominatimModel();
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        setState(() {
+          _selectedIndex = -1;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Autocomplete<String>(
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          return _suggestions
+              .where((String suggestion) => suggestion
+                  .toLowerCase()
+                  .contains(textEditingValue.text.toLowerCase()))
+              .toList();
+        },
+        onSelected: (String selectedValue) {
+          print('Selected: $selectedValue');
+        },
+        fieldViewBuilder: (BuildContext context,
+            TextEditingController controller,
+            FocusNode focusNode,
+            VoidCallback onFieldSubmitted) {
+          _focusNode = focusNode;
+          _searchController = controller;
+          return TextField(
+            controller: controller,
+            focusNode: focusNode,
+            onChanged: (String value) {
+              // Add any additional logic when text changes
+              if (_debounce?.isActive ?? false) _debounce?.cancel();
+              _debounce = Timer(const Duration(milliseconds: 500), () async {
+                List<Place> temp = await nominatim.fetchPlaces(value);
+                if (temp.isEmpty) {
+                  _suggestions = [];
+                } else {
+                  temp.forEach((e) {
+                    _suggestions.add(e.name);
+                  });
+                }
+
+                debugPrint('Suggestions $_suggestions');
+                setState(() {});
+              });
+            },
+            onSubmitted: (String value) {
+              // Add any logic when the user submits the search
+              onFieldSubmitted();
+            },
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              hintText: 'Search',
+            ),
+          );
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4.0,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 200),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final String option = options.elementAt(index);
+                    return InkWell(
+                      onTap: () {
+                        onSelected(option);
+                      },
+                      child: Builder(builder: (BuildContext context) {
+                        final bool highlight =
+                            AutocompleteHighlightedOption.of(context) == index;
+                        // if (highlight) {
+                        //   SchedulerBinding.instance
+                        //       .addPostFrameCallback((Duration timeStamp) {
+                        //     Scrollable.ensureVisible(context, alignment: 0.5);
+                        //   });
+                        // }
+                        return Container(
+                          color:
+                              highlight ? Theme.of(context).focusColor : null,
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(option),
+                        );
+                      }),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  List<String> _suggestions = [];
 }
