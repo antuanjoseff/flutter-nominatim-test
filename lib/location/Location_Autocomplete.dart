@@ -3,25 +3,30 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nominatim/models/nominatim_model.dart';
 import 'package:nominatim/models/place_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 
 class LocationAutocomplete extends StatefulWidget {
-  const LocationAutocomplete({super.key});
+  LocationAutocomplete({super.key, this.placeHolder});
 
+  String? placeHolder;
   @override
   State<LocationAutocomplete> createState() => _LocationAutocompleteState();
 }
 
 class _LocationAutocompleteState extends State<LocationAutocomplete> {
   Timer? _debounce;
+  bool selectedSuggestion = false;
+  late FocusScopeNode _focusNode;
   NominatimModel nominatim = NominatimModel();
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -34,15 +39,21 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
     SearchController.addListener(() {
       _onChange();
     });
+
+    _focusNode = FocusScopeNode();
     super.initState();
   }
 
   _onChange() {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      listOfLocation = await nominatim.fetchPlaces(SearchController.text);
-
-      setState(() {});
+    if (SearchController.text.length < 4) return;
+    _debounce = Timer(const Duration(milliseconds: 250), () async {
+      if (!selectedSuggestion) {
+        listOfLocation = await nominatim.fetchPlaces(SearchController.text);
+        setState(() {});
+      } else {
+        selectedSuggestion = false;
+      }
     });
     // placeSuggestion(SearchController.text);
   }
@@ -77,69 +88,87 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          title: const Text('Location autocomplete',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              )),
-        ),
-        body: Padding(
-          padding: EdgeInsets.all(15),
-          child: Column(
-            children: [
-              TextField(
-                controller: SearchController,
-                decoration: InputDecoration(hintText: 'Search place...'),
-                onChanged: (value) {
-                  setState(() {});
-                },
+    return Padding(
+      padding: EdgeInsets.all(15),
+      child: Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyUpEvent) {
+            if (event.physicalKey == PhysicalKeyboardKey.enter) {
+              SearchController.selection =
+                  TextSelection.collapsed(offset: SearchController.text.length);
+              return KeyEventResult.handled;
+            }
+            if (event.physicalKey == PhysicalKeyboardKey.arrowDown) {
+              node.nextFocus();
+              return KeyEventResult.handled;
+            }
+            if (event.physicalKey == PhysicalKeyboardKey.arrowUp) {
+              node.previousFocus();
+              return KeyEventResult.handled;
+            }
+          }
+
+          return KeyEventResult.ignored;
+        },
+        child: Column(
+          children: [
+            TextField(
+              controller: SearchController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: widget.placeHolder,
+                labelText: widget.placeHolder,
               ),
-              Visibility(
-                visible: SearchController.text.isNotEmpty,
-                child: Expanded(
-                  child: ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: listOfLocation.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                            onTap: () {},
-                            child: ListTile(
-                              title: Text(
-                                listOfLocation[index].name,
+              onChanged: (value) {
+                setState(() {});
+              },
+            ),
+            Visibility(
+              visible: SearchController.text.isNotEmpty,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    color: Colors.orangeAccent,
+                    child: ListView.builder(
+                        shrinkWrap: true,
+                        primary: true,
+                        // physics: NeverScrollableScrollPhysics(),
+                        itemCount: listOfLocation.length,
+                        itemBuilder: (context, index) {
+                          return TextButton(
+                            onPressed: () {
+                              debugPrint('button pressed');
+                              SearchController.text =
+                                  listOfLocation[index].name;
+                              selectedSuggestion = true;
+
+                              setState(() {
+                                listOfLocation = [];
+                              });
+                            },
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    listOfLocation[index].name,
+                                  ),
+                                  Icon(Icons.favorite),
+                                ],
                               ),
-                            ));
-                      }),
-                ),
+                            ),
+                          );
+                        }),
+                  ),
+                ],
               ),
-              Visibility(
-                visible: SearchController.text.isEmpty,
-                child: Container(
-                  margin: EdgeInsets.only(top: 20),
-                  child: ElevatedButton(
-                      onPressed: () {},
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.my_location, color: Colors.green),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Text("My Location",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.green,
-                              ))
-                        ],
-                      )),
-                ),
-              )
-            ],
-          ),
-        ));
+            )
+          ],
+        ),
+      ),
+    );
   }
 }
