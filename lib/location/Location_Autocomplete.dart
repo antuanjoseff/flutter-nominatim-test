@@ -115,10 +115,18 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
             TextField(
               controller: SearchController,
               decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: widget.placeHolder,
-                labelText: widget.placeHolder,
-              ),
+                  enabled: true,
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                        width: 1, color: Colors.grey[300] ?? Colors.grey),
+                  ),
+                  hintText: widget.placeHolder,
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  labelText: widget.placeHolder,
+                  labelStyle: TextStyle(
+                      color: Colors.blue, fontWeight: FontWeight.bold),
+                  prefixIcon: Icon(Icons.circle_outlined,
+                      color: Colors.orange, size: 15)),
               onChanged: (value) {
                 setState(() {});
               },
@@ -129,7 +137,7 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    color: Colors.orangeAccent,
+                    color: Colors.grey[200],
                     child: ListView.builder(
                         shrinkWrap: true,
                         primary: true,
@@ -156,7 +164,7 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
                                   Text(
                                     listOfLocation[index].name,
                                   ),
-                                  Icon(Icons.favorite),
+                                  Icon(Icons.location_on),
                                 ],
                               ),
                             ),

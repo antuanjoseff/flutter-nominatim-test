@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nominatim/listNames.dart';
-import 'package:nominatim/location/Location_Autocomplete.dart';
-import 'package:nominatim/models/place_model.dart';
 import 'package:nominatim/screens/source_target_page.dart';
-import 'dart:async';
-import './models/nominatim_model.dart';
+import 'package:nominatim/widgets/days_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -20,7 +16,14 @@ class MyApp extends StatelessWidget {
           appBar: AppBar(
             title: Text('Search Bar with Suggestions'),
           ),
-          body: SourceTargetPage()),
+          body: Center(
+            child: SizedBox(
+              width: 650,
+              child: Column(
+                children: [SourceTargetPage(), DaysPicker()],
+              ),
+            ),
+          )),
     );
   }
 }

@@ -14,11 +14,21 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
     return Container(
       child: Column(
         children: [
-          LocationAutocomplete(
-            placeHolder: 'Origen...',
-          ),
-          LocationAutocomplete(
-            placeHolder: 'Destí...',
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              elevation: 5,
+              child: Column(
+                children: [
+                  LocationAutocomplete(
+                    placeHolder: 'Origen...',
+                  ),
+                  LocationAutocomplete(
+                    placeHolder: 'Destí...',
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
