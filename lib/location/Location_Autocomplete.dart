@@ -14,10 +14,10 @@ class LocationAutocomplete extends StatefulWidget {
       {super.key,
       this.placeHolder,
       this.onUnfoldChanges,
-      required this.onSelected});
+      required this.onChanged});
 
   Function? onUnfoldChanges;
-  Function onSelected;
+  Function onChanged;
   String? placeHolder;
   @override
   State<LocationAutocomplete> createState() => _LocationAutocompleteState();
@@ -126,6 +126,7 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
                 SearchController.text = '';
                 listOfLocation = [];
                 statusChanged(!suggestionsVisible);
+                widget.onChanged(null);
               });
 
               return KeyEventResult.handled;
@@ -180,7 +181,7 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
                             onPressed: () {
                               SearchController.text =
                                   listOfLocation[index].name;
-                              widget.onSelected(listOfLocation[index]);
+                              widget.onChanged(listOfLocation[index]);
                               selectedSuggestion = true;
 
                               statusChanged(closed);

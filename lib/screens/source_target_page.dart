@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:nominatim/location/Location_Autocomplete.dart';
 import 'package:nominatim/models/place_model.dart';
+import '../models/trip.dart';
 
 class SourceTargetPage extends StatefulWidget {
-  const SourceTargetPage({super.key});
+  Function onCompleted;
+  SourceTargetPage({super.key, required this.onCompleted});
 
   @override
   State<SourceTargetPage> createState() => _SourceTargetPageState();
@@ -11,6 +13,11 @@ class SourceTargetPage extends StatefulWidget {
 
 class _SourceTargetPageState extends State<SourceTargetPage> {
   bool switcherOn = true;
+
+  Map<String, Place> route_source = {};
+  Place? routeSource;
+  Place? routeTarget;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -29,9 +36,13 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
                           switcherOn = !unfolded;
                         });
                       },
-                      onSelected: (Place place) {
-                        debugPrint(
-                            'Place ${place.pk} ${place.name} ${place.codi}');
+                      onChanged: (Place? place) {
+                        if (place != null) {
+                          route_source['source'] = place;
+                          if (routeIsComplete(route_source)) {
+                            widget.onCompleted(route_source);
+                          }
+                        }
                       }),
                   LocationAutocomplete(
                       placeHolder: 'Destí...',
@@ -40,9 +51,13 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
                           switcherOn = !unfolded;
                         });
                       },
-                      onSelected: (Place place) {
-                        debugPrint(
-                            'Place ${place.pk} ${place.name} ${place.codi}');
+                      onChanged: (Place? place) {
+                        if (place != null) {
+                          route_source['target'] = place;
+                          if (routeIsComplete(route_source)) {
+                            widget.onCompleted(route_source);
+                          }
+                        }
                       }),
                 ],
               ),
@@ -65,5 +80,14 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
         ]),
       ],
     );
+  }
+
+  bool routeIsComplete(Map<String, Place> route) {
+    List<String> keys = route.keys.toList();
+    if (keys.contains('source') && keys.contains('target')) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
