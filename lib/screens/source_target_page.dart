@@ -10,41 +10,34 @@ class SourceTargetPage extends StatefulWidget {
 }
 
 class _SourceTargetPageState extends State<SourceTargetPage> {
-  bool switcher = true;
+  bool switcherOn = true;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              elevation: 5,
+    return Column(
+      children: [
+        Stack(alignment: Alignment(-0.97, 0), children: [
+          Card(
+            elevation: 5,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
                   LocationAutocomplete(
                       placeHolder: 'Origen...',
                       onUnfoldChanges: (bool unfolded) {
                         setState(() {
-                          switcher = !unfolded;
+                          switcherOn = !unfolded;
                         });
                       },
                       onSelected: (Place place) {
                         debugPrint(
                             'Place ${place.pk} ${place.name} ${place.codi}');
                       }),
-                  if (switcher)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Icon(Icons.swap_vert),
-                      ],
-                    ),
                   LocationAutocomplete(
                       placeHolder: 'Destí...',
                       onUnfoldChanges: (bool unfolded) {
                         setState(() {
-                          switcher = !unfolded;
+                          switcherOn = !unfolded;
                         });
                       },
                       onSelected: (Place place) {
@@ -55,8 +48,22 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
               ),
             ),
           ),
-        ],
-      ),
+          if (switcherOn)
+            Tooltip(
+              message: 'Switch',
+              child: ElevatedButton(
+                  onPressed: () {},
+                  clipBehavior: Clip.none,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
+                    elevation: 0,
+                  ),
+                  child: Icon(Icons.swap_vert_circle,
+                      size: 40, color: Colors.blue)),
+            ),
+        ]),
+      ],
     );
   }
 }

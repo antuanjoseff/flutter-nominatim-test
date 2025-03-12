@@ -34,9 +34,11 @@ class _DaysPickerState extends State<DaysPicker> {
                         child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                                 shape: CircleBorder(),
+                                padding: EdgeInsets.all(15),
+                                minimumSize: Size(0, 0),
                                 backgroundColor: selected.contains(item)
                                     ? Colors.blue
-                                    : null,
+                                    : Colors.white,
                                 foregroundColor: selected.contains(item)
                                     ? Colors.white
                                     : Colors.blue,
