@@ -20,7 +20,12 @@ class MyApp extends StatelessWidget {
             child: SizedBox(
               width: 650,
               child: Column(
-                children: [SourceTargetPage(), DaysPicker()],
+                children: [
+                  SourceTargetPage(),
+                  DaysPicker(onChange: (value) {
+                    debugPrint('I am in the main file $value');
+                  })
+                ],
               ),
             ),
           )),

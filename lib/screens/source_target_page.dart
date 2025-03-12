@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nominatim/location/Location_Autocomplete.dart';
+import 'package:nominatim/models/place_model.dart';
 
 class SourceTargetPage extends StatefulWidget {
   const SourceTargetPage({super.key});
@@ -9,6 +10,7 @@ class SourceTargetPage extends StatefulWidget {
 }
 
 class _SourceTargetPageState extends State<SourceTargetPage> {
+  bool switcher = true;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -21,11 +23,34 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
               child: Column(
                 children: [
                   LocationAutocomplete(
-                    placeHolder: 'Origen...',
-                  ),
+                      placeHolder: 'Origen...',
+                      onUnfoldChanges: (bool unfolded) {
+                        setState(() {
+                          switcher = !unfolded;
+                        });
+                      },
+                      onSelected: (Place place) {
+                        debugPrint(
+                            'Place ${place.pk} ${place.name} ${place.codi}');
+                      }),
+                  if (switcher)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(Icons.swap_vert),
+                      ],
+                    ),
                   LocationAutocomplete(
-                    placeHolder: 'Destí...',
-                  ),
+                      placeHolder: 'Destí...',
+                      onUnfoldChanges: (bool unfolded) {
+                        setState(() {
+                          switcher = !unfolded;
+                        });
+                      },
+                      onSelected: (Place place) {
+                        debugPrint(
+                            'Place ${place.pk} ${place.name} ${place.codi}');
+                      }),
                 ],
               ),
             ),

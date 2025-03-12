@@ -10,8 +10,14 @@ import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 
 class LocationAutocomplete extends StatefulWidget {
-  LocationAutocomplete({super.key, this.placeHolder});
+  LocationAutocomplete(
+      {super.key,
+      this.placeHolder,
+      this.onUnfoldChanges,
+      required this.onSelected});
 
+  Function? onUnfoldChanges;
+  Function onSelected;
   String? placeHolder;
   @override
   State<LocationAutocomplete> createState() => _LocationAutocompleteState();
@@ -20,6 +26,8 @@ class LocationAutocomplete extends StatefulWidget {
 class _LocationAutocompleteState extends State<LocationAutocomplete> {
   Timer? _debounce;
   bool selectedSuggestion = false;
+  bool suggestionsVisible = true;
+
   late FocusScopeNode _focusNode;
   NominatimModel nominatim = NominatimModel();
 
@@ -46,10 +54,13 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
 
   _onChange() {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
-    if (SearchController.text.length < 4) return;
+    if (SearchController.text.length < 4) {
+      return;
+    }
     _debounce = Timer(const Duration(milliseconds: 250), () async {
       if (!selectedSuggestion) {
         listOfLocation = await nominatim.fetchPlaces(SearchController.text);
+        statusChanged(suggestionsVisible);
         setState(() {});
       } else {
         selectedSuggestion = false;
@@ -88,6 +99,9 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
 
   @override
   Widget build(BuildContext context) {
+    const closed = true;
+    const open = false;
+
     return Padding(
       padding: EdgeInsets.all(15),
       child: Focus(
@@ -96,6 +110,7 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
             if (event.physicalKey == PhysicalKeyboardKey.enter) {
               SearchController.selection =
                   TextSelection.collapsed(offset: SearchController.text.length);
+              // widget.onSelected();
               return KeyEventResult.handled;
             }
             if (event.physicalKey == PhysicalKeyboardKey.arrowDown) {
@@ -106,31 +121,48 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
               node.previousFocus();
               return KeyEventResult.handled;
             }
+            if (event.physicalKey == PhysicalKeyboardKey.escape) {
+              setState(() {
+                SearchController.text = '';
+                listOfLocation = [];
+                statusChanged(!suggestionsVisible);
+              });
+
+              return KeyEventResult.handled;
+            }
           }
 
           return KeyEventResult.ignored;
         },
         child: Column(
           children: [
-            TextField(
-              controller: SearchController,
-              decoration: InputDecoration(
-                  enabled: true,
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                        width: 1, color: Colors.grey[300] ?? Colors.grey),
+            Row(
+              children: [
+                Icon(Icons.circle_outlined, color: Colors.orange, size: 15),
+                SizedBox(width: 15),
+                Expanded(
+                  child: TextField(
+                    controller: SearchController,
+                    decoration: InputDecoration(
+                      enabled: true,
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            width: 1, color: Colors.grey[300] ?? Colors.grey),
+                      ),
+                      hintText: widget.placeHolder,
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                      labelText: widget.placeHolder,
+                      labelStyle: TextStyle(
+                          color: Colors.blue, fontWeight: FontWeight.bold),
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
                   ),
-                  hintText: widget.placeHolder,
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  labelText: widget.placeHolder,
-                  labelStyle: TextStyle(
-                      color: Colors.blue, fontWeight: FontWeight.bold),
-                  prefixIcon: Icon(Icons.circle_outlined,
-                      color: Colors.orange, size: 15)),
-              onChanged: (value) {
-                setState(() {});
-              },
+                ),
+              ],
             ),
+            // LIST OF SEARCH RESULTS
             Visibility(
               visible: SearchController.text.isNotEmpty,
               child: Column(
@@ -146,10 +178,12 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
                         itemBuilder: (context, index) {
                           return TextButton(
                             onPressed: () {
-                              debugPrint('button pressed');
                               SearchController.text =
                                   listOfLocation[index].name;
+                              widget.onSelected(listOfLocation[index]);
                               selectedSuggestion = true;
+
+                              statusChanged(closed);
 
                               setState(() {
                                 listOfLocation = [];
@@ -178,5 +212,11 @@ class _LocationAutocompleteState extends State<LocationAutocomplete> {
         ),
       ),
     );
+  }
+
+  void statusChanged(bool status) {
+    if (widget.onUnfoldChanges != null) {
+      widget.onUnfoldChanges!(status);
+    }
   }
 }

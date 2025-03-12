@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DaysPicker extends StatefulWidget {
-  const DaysPicker({super.key});
+  Function? onChange;
+  DaysPicker({super.key, this.onChange});
 
   @override
   State<DaysPicker> createState() => _DaysPickerState();
@@ -45,6 +46,12 @@ class _DaysPickerState extends State<DaysPicker> {
                                 selected.add(item);
                               } else {
                                 selected.remove(item);
+                              }
+                              if (widget.onChange != null) {
+                                debugPrint('onchange is not null $item');
+                                widget.onChange!(selected);
+                              } else {
+                                debugPrint('onchange is null');
                               }
                               setState(() {});
                             },
