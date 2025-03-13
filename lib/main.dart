@@ -39,9 +39,7 @@ class _MyAppState extends State<MyApp> {
                       enableButton = true;
                     });
                   }),
-                  DaysPicker(onChange: (value) {
-                    debugPrint('I am in the main file $value');
-                  }),
+
                   SizedBox(
                     height: 100,
                   ),
