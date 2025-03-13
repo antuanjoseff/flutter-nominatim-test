@@ -18,67 +18,101 @@ class _SourceTargetPageState extends State<SourceTargetPage> {
   Place? routeSource;
   Place? routeTarget;
 
+  double topFirst = 20;
+  double topSecond = 100;
+  double size = 200;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Stack(alignment: Alignment(-0.97, 0), children: [
-          Card(
-            elevation: 5,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  LocationAutocomplete(
-                      placeHolder: 'Origen...',
-                      onUnfoldChanges: (bool unfolded) {
-                        setState(() {
-                          switcherOn = !unfolded;
-                        });
-                      },
-                      onChanged: (Place? place) {
-                        if (place != null) {
-                          route_source['source'] = place;
-                          if (routeIsComplete(route_source)) {
-                            widget.onCompleted(route_source);
-                          }
-                        }
-                      }),
-                  LocationAutocomplete(
-                      placeHolder: 'Destí...',
-                      onUnfoldChanges: (bool unfolded) {
-                        setState(() {
-                          switcherOn = !unfolded;
-                        });
-                      },
-                      onChanged: (Place? place) {
-                        if (place != null) {
-                          route_source['target'] = place;
-                          if (routeIsComplete(route_source)) {
-                            widget.onCompleted(route_source);
-                          }
-                        }
-                      }),
-                ],
+    return Card(
+      elevation: 5,
+      color: Colors.pink[200],
+      child: Stack(children: [
+        Container(
+          height: size,
+          width: 350,
+        ),
+        AnimatedPositioned(
+          duration: Duration(milliseconds: 250),
+          left: 60,
+          top: topFirst,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 250,
+                child: TextField(
+                  decoration: InputDecoration(
+                    enabled: true,
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                          width: 1, color: Colors.grey[300] ?? Colors.grey),
+                    ),
+                    hintText: 'destí',
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    labelText: 'Destí',
+                    labelStyle: TextStyle(
+                        color: Colors.blue, fontWeight: FontWeight.bold),
+                  ),
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                ),
               ),
+            ],
+          ),
+        ),
+        AnimatedPositioned(
+          duration: Duration(milliseconds: 250),
+          left: 60,
+          top: topSecond,
+          child: SizedBox(
+            width: 300,
+            child: TextField(
+              decoration: InputDecoration(
+                enabled: true,
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                      width: 1, color: Colors.grey[300] ?? Colors.grey),
+                ),
+                hintText: 'Origen',
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+                labelText: 'Origen',
+                labelStyle:
+                    TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              ),
+              onChanged: (value) {
+                setState(() {});
+              },
             ),
           ),
-          if (switcherOn)
-            Tooltip(
-              message: 'Switch',
-              child: ElevatedButton(
-                  onPressed: () {},
-                  clipBehavior: Clip.none,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(0, 0),
-                    elevation: 0,
-                  ),
-                  child: Icon(Icons.swap_vert_circle,
-                      size: 40, color: Colors.blue)),
-            ),
-        ]),
-      ],
+        ),
+        Positioned(
+            top: 5,
+            right: 5,
+            child: ElevatedButton(
+              onPressed: () {
+                double temp = topFirst;
+                topFirst = topSecond;
+                topSecond = temp;
+                size *= 1.2;
+                setState(() {});
+              },
+              child: Icon(Icons.swap_vert_circle, size: 40),
+            )),
+        // Tooltip(
+        //   message: 'Switch',
+        //   child: ElevatedButton(
+        //       onPressed: () {},
+        //       clipBehavior: Clip.none,
+        //       style: ElevatedButton.styleFrom(
+        //         padding: EdgeInsets.zero,
+        //         minimumSize: Size(0, 0),
+        //         elevation: 0,
+        //       ),
+        //       child:
+        //           Icon(Icons.swap_vert_circle, size: 40, color: Colors.blue)),
+        // ),
+      ]),
     );
   }
 

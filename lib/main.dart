@@ -3,6 +3,7 @@ import 'package:nominatim/models/place_model.dart';
 import 'package:nominatim/models/trip.dart';
 import 'package:nominatim/screens/source_target_page.dart';
 import 'package:nominatim/widgets/days_picker.dart';
+import 'package:nominatim/widgets/swap.dart';
 
 void main() {
   runApp(MyApp());
@@ -44,6 +45,7 @@ class _MyAppState extends State<MyApp> {
                   SizedBox(
                     height: 100,
                   ),
+                  // Swap(),
                   ElevatedButton(
                     onPressed: enableButton ? () {} : null,
                     child: Text('Enviar'),
